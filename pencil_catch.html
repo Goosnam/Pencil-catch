@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pencil Catch Game</title>
+<style>
+  body {
+    margin: 0; 
+    overflow: hidden; 
+    background: #f0f8ff;
+    font-family: Arial, sans-serif;
+    user-select: none;
+  }
+  canvas {
+    background: #fffbe6;
+    display: block;
+    margin: 20px auto;
+    border: 2px solid #333;
+    border-radius: 8px;
+  }
+  #score {
+    text-align: center;
+    font-size: 24px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="500" height="400"></canvas>
+<div id="score">Score: 0</div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreDisplay = document.getElementById('score');
+
+  let score = 0;
+  const pencilWidth = 40;
+  const pencilHeight = 10;
+  const pencilColor = '#ffcc00';
+
+  // Player paddle
+  const paddle = {
+    x: canvas.width / 2 - 50,
+    y: canvas.height - 30,
+    width: 100,
+    height: 15,
+    speed: 7,
+    dx: 0
+  };
+
+  // Falling pencils array
+  let pencils = [];
+
+  // Create a pencil object
+  function createPencil() {
+    const x = Math.random() * (canvas.width - pencilWidth);
+    return { x: x, y: -pencilHeight, speed: 3 + Math.random() * 3 };
+  }
+
+  // Add new pencil every 1 second
+  setInterval(() => {
+    pencils.push(createPencil());
+  }, 1000);
+
+  // Draw paddle
+  function drawPaddle() {
+    ctx.fillStyle = '#007acc';
+    ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+  }
+
+  // Draw pencils
+  function drawPencils() {
+    ctx.fillStyle = pencilColor;
+    pencils.forEach(p => {
+      // Draw pencil body
+      ctx.fillRect(p.x, p.y, pencilWidth, pencilHeight);
+      // Draw pencil tip (triangle)
+      ctx.beginPath();
+      ctx.moveTo(p.x + pencilWidth, p.y);
+      ctx.lineTo(p.x + pencilWidth + 10, p.y + pencilHeight / 2);
+      ctx.lineTo(p.x + pencilWidth, p.y + pencilHeight);
+      ctx.fill();
+    });
+  }
+
+  // Update positions
+  function update() {
+    // Move paddle
+    paddle.x += paddle.dx;
+    if (paddle.x < 0) paddle.x = 0;
+    if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
+
+    // Move pencils down
+    pencils.forEach((p, index) => {
+      p.y += p.speed;
+      // Check for catch
+      if (
+        p.y + pencilHeight >= paddle.y &&
+        p.x + pencilWidth >= paddle.x &&
+        p.x <= paddle.x + paddle.width
+      ) {
+        pencils.splice(index, 1);
+        score++;
+        scoreDisplay.textContent = 'Score: ' + score;
+      }
+      // Remove pencils that fall past bottom
+      else if (p.y > canvas.height) {
+        pencils.splice(index, 1);
+      }
+    });
+  }
+
+  // Clear canvas
+  function clear() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Game loop
+  function loop() {
+    clear();
+    drawPaddle();
+    drawPencils();
+    update();
+    requestAnimationFrame(loop);
+  }
+
+  // Keyboard controls
+  function keyDownHandler(e) {
+    if (e.key === 'ArrowLeft') paddle.dx = -paddle.speed;
+    else if (e.key === 'ArrowRight') paddle.dx = paddle.speed;
+  }
+
+  function keyUpHandler(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') paddle.dx = 0;
+  }
+
+  document.addEventListener('keydown', keyDownHandler);
+  document.addEventListener('keyup', keyUpHandler);
+
+  // Start game loop
+  loop();
+</script>
+
+</body>
+</html>
